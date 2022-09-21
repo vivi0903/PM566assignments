@@ -1,0 +1,195 @@
+---
+title: "Assignment01"
+author: "Yuwei Wu"
+date: "`r Sys.Date()`"
+output: github_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(data.table)
+```
+
+
+## 1. Read in the data.
+```{r}
+pm1 <- data.table::fread("ad_viz_plotval_data2004.csv")
+pm2 <- data.table::fread("ad_viz_plotval_data2019.csv")
+```
+
+## 2. Check the dimensions, headers, footers.
+
+2004 dataset:
+```{r}
+dim(pm1)
+```
+There are 19233 rows and 20 columns.
+```{r}
+head(pm1)
+tail(pm1)
+```
+2019 dataset:
+```{r}
+dim(pm2)
+```
+There are 53156 rows and 20 columns.
+```{r}
+head(pm2)
+tail(pm2)
+```
+
+## 3. Take a look at the variables.
+
+2004 dataset:
+```{r}
+str(pm1)
+```
+2019 dataset:
+```{r}
+str(pm2)
+```
+
+## 4. Take a closer look at the key variables.
+
+2004 dataset:
+```{r}
+table(pm1$Date)
+table(pm1$STATE)
+table(pm1$COUNTY)
+summary(pm1$`Daily Mean PM2.5 Concentration`)
+```
+In 2004, the minimum PM2.5 concentration is -0.1 μg/m³, the maximum PM2.5 concentration is 251 μg/m³, the median is 10.1 μg/m³, and the mean is 16.3 μg/m³ in California.
+
+2019 dataset:
+```{r}
+table(pm2$Date)
+table(pm2$STATE)
+table(pm2$COUNTY)
+summary(pm2$`Daily Mean PM2.5 Concentration`)
+```
+In 2019, the minimum PM2.5 concentration is -2.2 μg/m³, the maximum PM2.5 concentration is 120.9 μg/m³, the median is 6.5 μg/m³, and the mean is 7.739 μg/m³ in California.
+
+Now we can see that the minimum PM2.5 concentration in 2019 is lower than the minimum PM2.5 concentration in 2004. The same is true for the maximum PM2.5 concentration.
+
+## 5. Combine the two years of data into one data frame.
+
+```{r}
+pm <- rbind(pm1, pm2)
+```
+
+Create a factor variable indicating which year the data comes from. I also rename the 'Daily Mean PM2.5 Concentration' variable to 'PM'.
+```{r}
+pm <- mutate(pm, year = factor(rep(c(2004, 2019), c(nrow(pm1), nrow(pm2))))) %>% 
+  rename(PM = "Daily Mean PM2.5 Concentration")
+```
+
+
+## 6. Create a basic map in leaflet() that shows the locations of the sites (make sure to use different colors for each year).
+
+```{r}
+library(leaflet)
+year.pal <- colorFactor(c('darkgreen','goldenrod'), domain=pm$`year`)
+year.pal
+
+```
+```{r}
+sitemap <- leaflet(pm) %>% 
+  # The looks of the Map
+  addProviderTiles('CartoDB.Positron') %>% 
+  # Some circles
+  addCircles(
+    lat = ~SITE_LATITUDE, lng=~SITE_LONGITUDE, 
+  # HERE IS OUR PAL!
+    label = ~`Site Name`, color = ~ year.pal(year),
+    opacity = 1, fillOpacity = 1, radius = 500
+    ) %>%
+  # And a pretty legend
+  addLegend('bottomleft', pal=year.pal, values=pm$year,
+          title='the year', opacity=1)
+sitemap
+```
+
+Summarize the spatial distribution of the monitoring sites:
+
+There are many locations of the sites in 2019, almost all over the California, but only a handful of locations of the sites in 2004.
+
+## 7. Check for any missing or implausible values of PM2.5 in the combined dataset. Explore the proportions of each and provide a summary of any temporal patterns you see in these observations.
+
+```{r}
+summary(pm$PM)
+```
+
+It looks like the PM2.5 concentration are in μg/m³. A PM2.5 concentration of -2.2 is like an implausible value. All the value of PM2.5 concentration should be positive number. And it looks like there are no missing data.
+
+Let us check the proportion of PM2.5 concentration less than 0.
+```{r}
+mean(pm$PM<0)
+```
+0.39% of the data are less than 0, which is not a huge amount.
+
+Then remove PM2.5 concentration less than 0.
+```{r}
+pm <- pm[PM >= 0]
+```
+check the data
+```{r}
+summary(pm$PM)
+```
+
+## 8. Explore the main question of interest at three different spatial levels(state, county, site in Los Angeles). Create exploratory plots (e.g. boxplots, histograms, line plots) and summary statistics that best suit each level of data. Be sure to write up explanations of what you observe in these data.
+
+State level:
+In order to show aggregate changes in PM2.5 across the entire California State, we can make boxplot of all monitor values in 2004 and 2019. Here, we take the log of the PM2.5 values to adjust for the skew in the data.
+```{r}
+library(ggplot2)
+ggplot(data = pm)+
+  geom_boxplot(mapping=aes(x=year, y=log2(PM), fill=year))
+```
+
+From the boxplot, it seems that on average, the PM2.5 concentration in 2019 are lower than they were in 2004.
+
+We can make some summaries of the two year’s worth data to get at actual numbers.
+```{r}
+with(pm, tapply(PM, year, summary))
+```
+
+
+County level:
+In order to show aggregate changes in PM2.5 across the county level in California, we can make scatterplot of average values in 2004 and 2019 in different county. 
+(Because there are many counties and the characters of the COUNTY variable are too long, so I use the COUNTY_CODE variable to draw the scatterplot.)
+```{r}
+pm_avg <- pm[,.(
+  PM = mean(PM,na.rm=TRUE)
+),by=c("COUNTY_CODE", "year")]
+pm_avg_data <- pm_avg[!is.na(PM) & PM != "clear"]
+ggplot(data = pm_avg_data) + 
+  geom_point(mapping = aes(x = COUNTY_CODE, y = PM, color = year))
+```
+
+From the scatterplot, we can see that there are many red points in the upper level, which means that many counties had higher average PM2.5 concentrations in 2004. Corresponding to a lot of blue points at the lower level, which means that many counties had lower average PM2.5 concentrations in 2019. Although a few counties had lower  average PM2.5 concentrations in 2004 than in 2019, this did not affect the overall results. It seems that on average, PM2.5 concentrations in 2019 have decreased than 2004 at the county level in California.
+
+
+Site in Los Angeles level:
+In order to show aggregate changes in PM2.5 at the site in Los Angeles in California, we can make scatterplot of average values in 2004 and 2019 in different site in LA. 
+```{r}
+sites <- filter(pm, COUNTY == "Los Angeles") %>% select(COUNTY, `Site Name`, PM, year,) 
+```
+
+```{r}
+sites_pm_avg <- sites[,.(
+  PM_avg = mean(PM,na.rm=TRUE)
+),by=c("Site Name", "year")]
+sites_pm_avg_data <- sites_pm_avg[!is.na(PM_avg) & PM_avg!= "clear"]
+ggplot(data = sites_pm_avg_data) + 
+  geom_point(mapping = aes(x = `Site Name`, y = PM_avg, color = year))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.1))
+```
+
+From the scatter plot, we can see that there are 16 sites in Los Angeles, one of which has no site name. All red points are in the upper layer and blue points are in the lower layer, indicating that the average PM2.5 concentration was higher in 2004 and lower in 2019 at different Los Angeles sites. Although a few of sites in Los Angeles were only recorded in 2004 or 201, but on average, PM2.5 concentrations in 2019 have decreased than 2004 at the level of sites in LA.
+
+In summary, concentrations of PM2.5 have decreased in California from 2004 to 2019.
