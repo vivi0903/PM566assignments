@@ -1,7 +1,7 @@
 Assignment01
 ================
 Yuwei Wu
-2022-09-20
+2022-09-23
 
 ``` r
 library(tidyverse)
@@ -31,14 +31,16 @@ library(data.table)
     ## 
     ##     transpose
 
-## 1. Read in the data.
+# Step1.
+
+## Read in data.
 
 ``` r
 pm1 <- data.table::fread("ad_viz_plotval_data2004.csv")
 pm2 <- data.table::fread("ad_viz_plotval_data2019.csv")
 ```
 
-## 2. Check the dimensions, headers, footers.
+## Check the dimensions, headers, footers.
 
 2004 dataset:
 
@@ -220,7 +222,7 @@ tail(pm2)
     ## 5:   Yolo      38.66121      -121.7327
     ## 6:   Yolo      38.66121      -121.7327
 
-## 3. Take a look at the variables.
+## Take a look at the variables.
 
 2004 dataset:
 
@@ -280,7 +282,11 @@ str(pm2)
     ##  $ SITE_LONGITUDE                : num  -122 -122 -122 -122 -122 ...
     ##  - attr(*, ".internal.selfref")=<externalptr>
 
-## 4. Take a closer look at the key variables.
+## Take a closer look at the key variables.
+
+I choose to check the Date, State, County, Site Name, Daily Mean PM2.5
+Concentration variables to see if there have any missing or implausible
+values.
 
 2004 dataset:
 
@@ -431,6 +437,222 @@ table(pm1$COUNTY)
     ##             580             475
 
 ``` r
+table(pm1$`Site Name`)
+```
+
+    ## 
+    ##                                                   
+    ##                                               229 
+    ##                           3425 N FIRST ST, FRESNO 
+    ##                                               521 
+    ##                                           Anaheim 
+    ##                                               418 
+    ##                             Aqua Tibia Wilderness 
+    ##                                               109 
+    ##                        Atascadero (original site) 
+    ##                                               117 
+    ##                                             Azusa 
+    ##                                               279 
+    ##                       Bakersfield-Airport (Planz) 
+    ##                                               100 
+    ##                            Bakersfield-California 
+    ##                                               850 
+    ##                         Bakersfield-Golden / M St 
+    ##                                                88 
+    ##                                          Big Bear 
+    ##                                                52 
+    ##                                          Bliss SP 
+    ##                                               119 
+    ##                           Brawley-220 Main Street 
+    ##                                                99 
+    ##                                           Burbank 
+    ##                                               109 
+    ##                             Calexico-Ethel Street 
+    ##                                               162 
+    ##                              Chico-Manzanita Ave. 
+    ##                                               122 
+    ##                                       Chula Vista 
+    ##                                               113 
+    ##                                      Clovis-Villa 
+    ##                                                90 
+    ##                               Colusa-Sunrise Blvd 
+    ##                                               201 
+    ##                                           Concord 
+    ##                                               259 
+    ##                                Corcoran-Patterson 
+    ##                                                84 
+    ##                                  Davis-UCD Campus 
+    ##                                               359 
+    ##                    Death Valley NP - Park Village 
+    ##                                               119 
+    ##                                          El Cajon 
+    ##                                               438 
+    ##                              El Centro-9th Street 
+    ##                                               105 
+    ##                         El Rio-Rio Mesa School #2 
+    ##                                               117 
+    ##                                         Escondido 
+    ##                                               412 
+    ##                                   Eureka I Street 
+    ##                                                58 
+    ##                                           Fontana 
+    ##                                               199 
+    ##                              Fremont - Chapel Way 
+    ##                                                94 
+    ##                                    Fresno-Pacific 
+    ##                                                90 
+    ##                      Grass Valley-Litton Building 
+    ##                                                56 
+    ##                                 Hoover Wilderness 
+    ##                                               122 
+    ##                                             Indio 
+    ##                                               161 
+    ##                       Joshua Tree NP - Black Rock 
+    ##                                               121 
+    ##                                 Kaiser Wilderness 
+    ##                                               110 
+    ##                                       Kearny Mesa 
+    ##                                               108 
+    ##                                            Keeler 
+    ##                                               128 
+    ##                              La Posta Reservation 
+    ##                                                23 
+    ##                           Lakeport-Lakeport Blvd. 
+    ##                                                60 
+    ##                         Lancaster-Division Street 
+    ##                                               111 
+    ##  Lassen Volcanic NP - Manzanita Lake Fire Station 
+    ##                                               110 
+    ##                       Lava Beds National Monument 
+    ##                                               117 
+    ##                                             Lebec 
+    ##                                               115 
+    ##                           Lebec-Peace Valley Road 
+    ##                                               107 
+    ##                                         Livermore 
+    ##                                               364 
+    ##                                Long Beach (North) 
+    ##                                               325 
+    ##                                Long Beach (South) 
+    ##                                               327 
+    ##                     Los Angeles-North Main Street 
+    ##                                               535 
+    ##                                           Lynwood 
+    ##                                               115 
+    ##                                           Mammoth 
+    ##                                                59 
+    ##                                       Merced-M St 
+    ##                                                90 
+    ##                                     Mission Viejo 
+    ##                                               111 
+    ##                               Modesto-14th Street 
+    ##                                               183 
+    ##                                            Mojave 
+    ##                                                63 
+    ##                              Ontario Fire Station 
+    ##                                               112 
+    ##                                      Palm Springs 
+    ##                                               112 
+    ##                                          Pasadena 
+    ##                                               113 
+    ## Pinnacles NP - Southwest of East Entrance Station 
+    ##                                               122 
+    ##                                    Piru - Pacific 
+    ##                                               111 
+    ##                     Point Reyes NS Ranger Station 
+    ##                                               120 
+    ##                         Portola-161 Nevada Street 
+    ##                                               181 
+    ##                            Quincy-N Church Street 
+    ##                                                77 
+    ##                                 Redding - Buckeye 
+    ##                                                 6 
+    ##                       Redding - Health Department 
+    ##                                                58 
+    ##                                   Redding - Toyon 
+    ##                                                 7 
+    ##                                      Redwood City 
+    ##                                               354 
+    ##                                        Redwood NP 
+    ##                                               117 
+    ##                                            Reseda 
+    ##                                               106 
+    ##                         Ridgecrest-California Ave 
+    ##                                                96 
+    ##                              Riverside (Magnolia) 
+    ##                                               110 
+    ##                           Roseville-N Sunrise Ave 
+    ##                                               246 
+    ##                                          Rubidoux 
+    ##                                               711 
+    ##                          Sacramento-1309 T Street 
+    ##                                               806 
+    ##                         Sacramento-Del Paso Manor 
+    ##                                               414 
+    ##       Sacramento Health Department-Stockton Blvd. 
+    ##                                               233 
+    ##                                         Salinas 3 
+    ##                                                60 
+    ##                      San Andreas-Gold Strike Road 
+    ##                                                61 
+    ##                                    San Bernardino 
+    ##                                               106 
+    ##                                San Diego-12th Ave 
+    ##                                               337 
+    ##                                     San Francisco 
+    ##                                               363 
+    ##             San Francisco - Bayview Hunters Point 
+    ##                                               197 
+    ##                                          San Jose 
+    ##                                               213 
+    ##                                San Jose - Jackson 
+    ##                                               447 
+    ##                         San Luis Obispo-Marsh St. 
+    ##                                                59 
+    ##                             San Rafael Wilderness 
+    ##                                               112 
+    ##                                     Santa Barbara 
+    ##                                                55 
+    ##                                        Santa Cruz 
+    ##                                                56 
+    ##                                       Santa Maria 
+    ##                                                58 
+    ##                               Santa Rosa - 5th St 
+    ##                                                92 
+    ##                           Sequoia NP-Ash Mountain 
+    ##                                               112 
+    ##                        Simi Valley-Cochran Street 
+    ##                                               172 
+    ##                        South Lake Tahoe-Sandy Way 
+    ##                                                 9 
+    ##                                 Stockton-Hazelton 
+    ##                                               122 
+    ##                                     Thousand Oaks 
+    ##                                               180 
+    ##                         TRAFFIC, RURAL PAVED ROAD 
+    ##                                               322 
+    ##                                           Trinity 
+    ##                                               115 
+    ##                              Truckee-Fire Station 
+    ##                                               176 
+    ##                                     Ukiah-Library 
+    ##                                                61 
+    ##                                           Vallejo 
+    ##                                               361 
+    ##                           Victorville-Park Avenue 
+    ##                                               182 
+    ##                                    Visalia-Church 
+    ##                                               515 
+    ##                              Woodland-Gibson Road 
+    ##                                               116 
+    ##        Yosemite NP-Yosemite Village Vistor Center 
+    ##                                               210 
+    ##                     Yosemite NP - Turtleback Dome 
+    ##                                               110 
+    ##                                         Yuba City 
+    ##                                               309
+
+``` r
 summary(pm1$`Daily Mean PM2.5 Concentration`)
 ```
 
@@ -440,6 +662,27 @@ summary(pm1$`Daily Mean PM2.5 Concentration`)
 In 2004, the minimum PM2.5 concentration is -0.1 μg/m³, the maximum
 PM2.5 concentration is 251 μg/m³, the median is 10.1 μg/m³, and the mean
 is 16.3 μg/m³ in California.
+
+It looks like the PM2.5 concentration are in μg/m³. A PM2.5
+concentration of -0.1 is like an implausible value. All the value of
+PM2.5 concentration should be positive number. And it looks like there
+are no missing data in 2004.
+
+Let us check the proportion of PM2.5 concentration less than 0.
+
+``` r
+mean(pm1$`Daily Mean PM2.5 Concentration`<0)
+```
+
+    ## [1] 5.199397e-05
+
+Just very few data are less than 0.
+
+Then remove PM2.5 concentration less than 0.
+
+``` r
+pm1 <- pm1[`Daily Mean PM2.5 Concentration` >= 0]
+```
 
 2019 dataset:
 
@@ -592,6 +835,330 @@ table(pm2$COUNTY)
     ##             405
 
 ``` r
+table(pm2$`Site Name`)
+```
+
+    ## 
+    ##                                                   
+    ##                                               102 
+    ##                                          29 Palms 
+    ##                                               300 
+    ##                                            Alpine 
+    ##                                               350 
+    ##                                           Anaheim 
+    ##                                               772 
+    ##                             Aqua Tibia Wilderness 
+    ##                                                86 
+    ##                                 Arroyo Grande CDF 
+    ##                                               356 
+    ##                                        Atascadero 
+    ##                                               359 
+    ##                                     Auburn-Atwood 
+    ##                                               353 
+    ##                                             Azusa 
+    ##                                               121 
+    ##                       Bakersfield-Airport (Planz) 
+    ##                                               115 
+    ##                            Bakersfield-California 
+    ##                                               748 
+    ##                         Bakersfield-Golden / M St 
+    ##                                               121 
+    ##                                   Banning Airport 
+    ##                                               365 
+    ##                            Berkeley- Aquatic Park 
+    ##                                               352 
+    ##                                          Big Bear 
+    ##                                                46 
+    ##                                          Bliss SP 
+    ##                                                61 
+    ##                           Brawley-220 Main Street 
+    ##                                               117 
+    ##                             Calexico-Ethel Street 
+    ##                                               773 
+    ##                                    Camp Pendleton 
+    ##                                               280 
+    ##                                     Carmel Valley 
+    ##                                               358 
+    ##                                 Chico-East Avenue 
+    ##                                               555 
+    ##                                       Chula Vista 
+    ##                                               116 
+    ##                                      Clovis-Villa 
+    ##                                               278 
+    ##                                  Colfax-City Hall 
+    ##                                               294 
+    ##                               Colusa-Sunrise Blvd 
+    ##                                               423 
+    ##                                           Compton 
+    ##                                               303 
+    ##                                           Concord 
+    ##                                               460 
+    ##                                Corcoran-Patterson 
+    ##                                               456 
+    ##                          Cortina Indian Rancheria 
+    ##                                               305 
+    ##                 Crescent City-Crescent Elk School 
+    ##                                               195 
+    ##                                         Crestline 
+    ##                                               344 
+    ##                                  Davis-UCD Campus 
+    ##                                               352 
+    ##                                           Donovan 
+    ##                                               327 
+    ##            El Cajon - Lexington Elementary School 
+    ##                                               364 
+    ##                              El Centro-9th Street 
+    ##                                               116 
+    ##                         El Rio-Rio Mesa School #2 
+    ##                                               344 
+    ##                                 Folsom-Natoma St. 
+    ##                                               399 
+    ##                                           Fontana 
+    ##                                               175 
+    ##                                    Fresno-Pacific 
+    ##                                               114 
+    ##                                  Fresno - Garland 
+    ##                                              1118 
+    ##                                            Gilroy 
+    ##                                               360 
+    ##                                          Glendora 
+    ##                                               360 
+    ##                                            Goleta 
+    ##                                               361 
+    ##                      Grass Valley-Litton Building 
+    ##                                               414 
+    ##                                     Hanford-Irwin 
+    ##                                               349 
+    ##                                         Hollister 
+    ##                                               356 
+    ##                                 Hoover Wilderness 
+    ##                                               101 
+    ##                                             Huron 
+    ##                                               354 
+    ##                                             Indio 
+    ##                                               118 
+    ##                                            Jacobs 
+    ##                                               107 
+    ##                       Joshua Tree NP - Black Rock 
+    ##                                               108 
+    ##        Joshua Tree NP - Cottonwood Visitor Center 
+    ##                                               275 
+    ##                                 Kaiser Wilderness 
+    ##                                               108 
+    ##                                  Kearny Villa Rd. 
+    ##                                               174 
+    ##                                            Keeler 
+    ##                                               486 
+    ##                                       King City 2 
+    ##                                               360 
+    ##                                     Lake Elsinore 
+    ##                                               351 
+    ##                      Lake Tahoe Community College 
+    ##                                               116 
+    ##                           Lakeport-S. Main Street 
+    ##                                                60 
+    ##                         Lancaster-Division Street 
+    ##                                               360 
+    ##                                     Laney College 
+    ##                                               361 
+    ##  Lassen Volcanic NP - Manzanita Lake Fire Station 
+    ##                                                93 
+    ##                       Lava Beds National Monument 
+    ##                                               100 
+    ##                                             Lebec 
+    ##                                               368 
+    ##             Lebec-Peace Valley/Frazier Park Roads 
+    ##                                               111 
+    ##                                        Lee Vining 
+    ##                                               339 
+    ##                           Lincoln-2885 Moore Road 
+    ##                                               304 
+    ##                                         Livermore 
+    ##                                               354 
+    ##                                   Lompoc H Street 
+    ##                                               354 
+    ##                    Long Beach-Route 710 Near Road 
+    ##                                               711 
+    ##                                Long Beach (North) 
+    ##                                               159 
+    ##                                Long Beach (South) 
+    ##                                               716 
+    ##                     Los Angeles-North Main Street 
+    ##                                               893 
+    ##                                       Madera-City 
+    ##                                               357 
+    ##                                           Mammoth 
+    ##                                               450 
+    ##                                           Manteca 
+    ##                                               269 
+    ##                                     Merced-Coffee 
+    ##                                               359 
+    ##                                       Merced-M St 
+    ##                                               120 
+    ##                                             Mesa2 
+    ##                                               361 
+    ##                             Mira Loma (Van Buren) 
+    ##                                               778 
+    ##                                     Mission Viejo 
+    ##                                               111 
+    ##                               Modesto-14th Street 
+    ##                                               438 
+    ##                                            Mojave 
+    ##                                               365 
+    ##                    Morongo Air Monitoring Station 
+    ##                                               392 
+    ##                               Napa Valley College 
+    ##                                               355 
+    ##                                           Oakland 
+    ##                                               361 
+    ##                                      Oakland West 
+    ##                                               357 
+    ##                              Ojai - East Ojai Ave 
+    ##                                               361 
+    ##                        Ontario-Route 60 Near Road 
+    ##                                               710 
+    ##                                       Pala Airpad 
+    ##                                               353 
+    ##                                      Palm Springs 
+    ##                                               119 
+    ##                                Paradise - Theater 
+    ##                                               339 
+    ##                                          Pasadena 
+    ##                                               175 
+    ##                                          Pechanga 
+    ##                                               388 
+    ##                                    Pico Rivera #2 
+    ##                                               178 
+    ## Pinnacles NP - Southwest of East Entrance Station 
+    ##                                               110 
+    ##                                    Piru - Pacific 
+    ##                                               347 
+    ##                             Pleasanton - Owens Ct 
+    ##                                               352 
+    ##                     Point Reyes NS Ranger Station 
+    ##                                               104 
+    ##                                       Porterville 
+    ##                                               338 
+    ##                                           Portola 
+    ##                                               199 
+    ##                            Quincy-N Church Street 
+    ##                                               331 
+    ##              Red Bluff-Walnut St. District Office 
+    ##                                               353 
+    ##                       Redding - Health Department 
+    ##                                                53 
+    ##                                      Redwood City 
+    ##                                               344 
+    ##                                        Redwood NP 
+    ##                                               114 
+    ##                                            Reseda 
+    ##                                               480 
+    ##                                   Ridgecrest-Ward 
+    ##                                               360 
+    ##                           Roseville-N Sunrise Ave 
+    ##                                               433 
+    ##                                          Rubidoux 
+    ##                                               833 
+    ##                          Sacramento-1309 T Street 
+    ##                                               542 
+    ##                           Sacramento-Bercut Drive 
+    ##                                               114 
+    ##                         Sacramento-Del Paso Manor 
+    ##                                               721 
+    ##                                         Salinas 3 
+    ##                                               408 
+    ##                      San Andreas-Gold Strike Road 
+    ##                                               338 
+    ##                                    San Bernardino 
+    ##                                                98 
+    ##             San Diego - Sherman Elementary School 
+    ##                                               121 
+    ##                    San Diego -Rancho Carmel Drive 
+    ##                                                70 
+    ##                                     San Francisco 
+    ##                                               359 
+    ##                                San Jose - Jackson 
+    ##                                               482 
+    ##                            San Jose - Knox Avenue 
+    ##                                               358 
+    ##                  San Lorenzo Valley Middle School 
+    ##                                               344 
+    ##                                   San Luis Obispo 
+    ##                                               343 
+    ##                                         San Pablo 
+    ##                                               351 
+    ##                                        San Rafael 
+    ##                                               353 
+    ##                             San Rafael Wilderness 
+    ##                                               106 
+    ##                                     Santa Barbara 
+    ##                                               338 
+    ##                                     Santa Clarita 
+    ##                                               358 
+    ##                                        Santa Cruz 
+    ##                                               353 
+    ##                                       Santa Maria 
+    ##                                               359 
+    ##                                        Sebastopol 
+    ##                                               343 
+    ##                           Sequoia NP-Ash Mountain 
+    ##                                               110 
+    ##                        Simi Valley-Cochran Street 
+    ##                                               715 
+    ##                                       Sloughhouse 
+    ##                                               358 
+    ##                                 Stockton-Hazelton 
+    ##                                               682 
+    ##                Table Mountain Air Monitoring Site 
+    ##                                               358 
+    ##                          Tahoe City-Fairway Drive 
+    ##                                               301 
+    ##                                          Temecula 
+    ##                                               363 
+    ##                                     Thousand Oaks 
+    ##                                               358 
+    ##                                     Tracy-Airport 
+    ##                                               356 
+    ##                         TRAFFIC, RURAL PAVED ROAD 
+    ##                                               360 
+    ##                                      Tranquillity 
+    ##                                               341 
+    ##                                           Trinity 
+    ##                                               118 
+    ##                              Truckee-Fire Station 
+    ##                                               112 
+    ##                                           Turlock 
+    ##                                               360 
+    ##                                     Ukiah-Library 
+    ##                                               359 
+    ##                                            Upland 
+    ##                                               334 
+    ##                                           Vallejo 
+    ##                                               716 
+    ##                           Victorville-Park Avenue 
+    ##                                               700 
+    ##                                    Visalia-Church 
+    ##                                               527 
+    ##                            Weaverville-Courthouse 
+    ##                                               227 
+    ## White Mountain Research Center - Owens Valley Lab 
+    ##                                               416 
+    ##                Willits-125 East Commercial Street 
+    ##                                               354 
+    ##                             Willows-Colusa Street 
+    ##                                               356 
+    ##                              Woodland-Gibson Road 
+    ##                                                53 
+    ##        Yosemite NP-Yosemite Village Vistor Center 
+    ##                                               320 
+    ##                     Yosemite NP - Turtleback Dome 
+    ##                                               216 
+    ##                                             Yreka 
+    ##                                               358 
+    ##                                         Yuba City 
+    ##                                               708
+
+``` r
 summary(pm2$`Daily Mean PM2.5 Concentration`)
 ```
 
@@ -602,13 +1169,32 @@ In 2019, the minimum PM2.5 concentration is -2.2 μg/m³, the maximum
 PM2.5 concentration is 120.9 μg/m³, the median is 6.5 μg/m³, and the
 mean is 7.739 μg/m³ in California.
 
-Now we can see that the minimum PM2.5 concentration in 2019 is lower
-than the minimum PM2.5 concentration in 2004. The same is true for the
-maximum PM2.5 concentration.
+A PM2.5 concentration of -2.2 is like an implausible value. All the
+value of PM2.5 concentration should be positive number. And it looks
+like there are no missing data in 2019.
 
-## 5. Combine the two years of data into one data frame.
+Let us check the proportion of PM2.5 concentration less than 0.
 
 ``` r
+mean(pm2$`Daily Mean PM2.5 Concentration`<0)
+```
+
+    ## [1] 0.00530514
+
+0.53% of the data are less than 0, which is not a huge amount.
+
+Then remove PM2.5 concentration less than 0.
+
+``` r
+pm2 <- pm2[`Daily Mean PM2.5 Concentration` >= 0]
+```
+
+# Step2.
+
+## Combine the two years of data into one data frame. Use the Date variable to create a new column for year, which will serve as an identifier. Change the names of the key variables so that they are easier to refer to in your code.
+
+``` r
+library(dplyr)
 pm <- rbind(pm1, pm2)
 ```
 
@@ -616,11 +1202,12 @@ Create a factor variable indicating which year the data comes from. I
 also rename the ‘Daily Mean PM2.5 Concentration’ variable to ‘PM’.
 
 ``` r
-pm <- mutate(pm, year = factor(rep(c(2004, 2019), c(nrow(pm1), nrow(pm2))))) %>% 
-  rename(PM = "Daily Mean PM2.5 Concentration")
+pm <- mutate(pm, year = factor(rep(c(2004, 2019), c(nrow(pm1), nrow(pm2))))) %>% rename(PM = "Daily Mean PM2.5 Concentration") %>% collect()
 ```
 
-## 6. Create a basic map in leaflet() that shows the locations of the sites (make sure to use different colors for each year).
+# Step3.
+
+## Create a basic map in leaflet() that shows the locations of the sites (make sure to use different colors for each year).
 
 ``` r
 library(leaflet)
@@ -650,8 +1237,8 @@ year.pal
     ##     }
     ##     pf(scaled)
     ## }
-    ## <bytecode: 0x0000023edfe403b0>
-    ## <environment: 0x0000023edfe459b0>
+    ## <bytecode: 0x0000028beb1d8ed8>
+    ## <environment: 0x0000028beb1e0508>
     ## attr(,"colorType")
     ## [1] "factor"
     ## attr(,"colorArgs")
@@ -675,44 +1262,17 @@ sitemap <- leaflet(pm) %>%
 sitemap
 ```
 
-![](assignment01_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+![](assignment01_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
-Summarize the spatial distribution of the monitoring sites:
+## Summarize the spatial distribution of the monitoring sites:
 
-There are many locations of the sites in 2019, almost all over the
-California, but only a handful of locations of the sites in 2004.
+All monitoring sites are located in California. There are many locations
+of the sites in 2019, almost all over California, but only a handful of
+locations of the sites in 2004.
 
-## 7. Check for any missing or implausible values of PM2.5 in the combined dataset. Explore the proportions of each and provide a summary of any temporal patterns you see in these observations.
+# Step4.
 
-``` r
-summary(pm$PM)
-```
-
-    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    ##   -2.20    4.40    7.20    9.17   11.30  251.00
-
-It looks like the PM2.5 concentration are in μg/m³. A PM2.5
-concentration of -2.2 is like an implausible value. All the value of
-PM2.5 concentration should be positive number. And it looks like there
-are no missing data.
-
-Let us check the proportion of PM2.5 concentration less than 0.
-
-``` r
-mean(pm$PM<0)
-```
-
-    ## [1] 0.003909434
-
-0.39% of the data are less than 0, which is not a huge amount.
-
-Then remove PM2.5 concentration less than 0.
-
-``` r
-pm <- pm[PM >= 0]
-```
-
-check the data
+## Check for any missing or implausible values of PM2.5 in the combined dataset. Explore the proportions of each and provide a summary of any temporal patterns you see in these observations.
 
 ``` r
 summary(pm$PM)
@@ -721,12 +1281,107 @@ summary(pm$PM)
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##    0.00    4.40    7.30    9.21   11.30  251.00
 
-## 8. Explore the main question of interest at three different spatial levels(state, county, site in Los Angeles). Create exploratory plots (e.g. boxplots, histograms, line plots) and summary statistics that best suit each level of data. Be sure to write up explanations of what you observe in these data.
+No there are are no missing data for the PM.
 
-State level: In order to show aggregate changes in PM2.5 across the
-entire California State, we can make boxplot of all monitor values in
-2004 and 2019. Here, we take the log of the PM2.5 values to adjust for
-the skew in the data.
+``` r
+distinct(pm, STATE)
+```
+
+    ##         STATE
+    ## 1: California
+
+There is just a California State.
+
+I would like to take a closer look at how many counties in California in
+Los Angeles there are in 2004 and 2019.
+
+``` r
+dist <- distinct(pm, COUNTY, year)
+tapply(dist$COUNTY, dist$year, length)
+```
+
+    ## 2004 2019 
+    ##   47   51
+
+There are 47 counties in California in 2004 and 51 counties in
+California in 2019 which means counties in California were not exactly
+overlapped in 2004 and 2019.
+
+Then I want the intersection between the counties present in 2004 and
+2019 so that we might choose monitors that have data in both periods.
+
+``` r
+county.year <- with(pm, split(COUNTY, year))
+bothcounty <- intersect(county.year[[1]], county.year[[2]])
+bothcounty
+```
+
+    ##  [1] "Alameda"         "Butte"           "Calaveras"       "Colusa"         
+    ##  [5] "Contra Costa"    "Del Norte"       "El Dorado"       "Fresno"         
+    ##  [9] "Humboldt"        "Imperial"        "Inyo"            "Kern"           
+    ## [13] "Kings"           "Lake"            "Los Angeles"     "Marin"          
+    ## [17] "Mariposa"        "Mendocino"       "Merced"          "Mono"           
+    ## [21] "Monterey"        "Nevada"          "Orange"          "Placer"         
+    ## [25] "Plumas"          "Riverside"       "Sacramento"      "San Benito"     
+    ## [29] "San Bernardino"  "San Diego"       "San Francisco"   "San Joaquin"    
+    ## [33] "San Luis Obispo" "San Mateo"       "Santa Barbara"   "Santa Clara"    
+    ## [37] "Santa Cruz"      "Shasta"          "Siskiyou"        "Solano"         
+    ## [41] "Sonoma"          "Stanislaus"      "Sutter"          "Trinity"        
+    ## [45] "Tulare"          "Ventura"         "Yolo"
+
+Now there are 47 same counties in CA in 2004 and 2019.
+
+``` r
+county <- filter(pm, COUNTY %in% bothcounty)
+```
+
+I also would like to take a closer look at how many sites in Los Angeles
+there are in 2004 and 2019.In order to do that, I filter the LA county.
+
+``` r
+sites <- filter(pm, COUNTY == "Los Angeles") %>% select(COUNTY, `Site Name`, PM, year,) 
+```
+
+``` r
+dis <- distinct(sites, `Site Name`, year)
+tapply(dis$`Site Name`, dis$year, length)
+```
+
+    ## 2004 2019 
+    ##   11   13
+
+There are 11 sites in LA in 2004 and 13 sites in LA in 2019 which means
+sites in LA were also not exactly overlapped in 2004 and 2019.
+
+Then I want the intersection between the sites in LA present in 2004 and
+2019.
+
+``` r
+sites.year <- with(sites, split(`Site Name`, year))
+bothsites <- intersect(sites.year[[1]], sites.year[[2]])
+bothsites
+```
+
+    ## [1] "Azusa"                         "Los Angeles-North Main Street"
+    ## [3] "Reseda"                        "Pasadena"                     
+    ## [5] "Long Beach (North)"            "Long Beach (South)"           
+    ## [7] "Lancaster-Division Street"     "Lebec"
+
+Now there are 8 same sites in LA in 2004 and 2019.
+
+``` r
+sites <- filter(sites, `Site Name` %in% bothsites)
+```
+
+# Step5.
+
+## Explore the main question of interest at three different spatial levels(state, county, site in Los Angeles). Create exploratory plots (e.g. boxplots, histograms, line plots) and summary statistics that best suit each level of data. Be sure to write up explanations of what you observe in these data.
+
+## State level:
+
+In order to show aggregate changes in PM2.5 across the entire California
+State, we can make boxplot of all monitor values in 2004 and 2019. Here,
+we take the log of the PM2.5 values to adjust for the skew in the data.
 
 ``` r
 library(ggplot2)
@@ -736,7 +1391,7 @@ ggplot(data = pm)+
 
     ## Warning: Removed 81 rows containing non-finite values (stat_boxplot).
 
-![](assignment01_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](assignment01_files/figure-gfm/unnamed-chunk-28-1.png)<!-- -->
 
 From the boxplot, it seems that on average, the PM2.5 concentration in
 2019 are lower than they were in 2004.
@@ -756,22 +1411,22 @@ with(pm, tapply(PM, year, summary))
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##   0.000   4.000   6.500   7.786  10.000 120.900
 
-County level: In order to show aggregate changes in PM2.5 across the
-county level in California, we can make scatterplot of average values in
-2004 and 2019 in different county. (Because there are many counties and
-the characters of the COUNTY variable are too long, so I use the
-COUNTY_CODE variable to draw the scatterplot.)
+## County level:
+
+In order to show aggregate changes in PM2.5 across the county level in
+California, we can make scatterplot of average values in 2004 and 2019
+in different county. (Because there are many counties and the characters
+of the COUNTY variable are too long, so I use the COUNTY_CODE variable
+to draw the scatterplot.)
 
 ``` r
-pm_avg <- pm[,.(
-  PM = mean(PM,na.rm=TRUE)
-),by=c("COUNTY_CODE", "year")]
-pm_avg_data <- pm_avg[!is.na(PM) & PM != "clear"]
-ggplot(data = pm_avg_data) + 
+county_avg <- county[,.(PM = mean(PM,na.rm=TRUE)
+), by= c("COUNTY_CODE", "year")]
+ggplot(data = county_avg) + 
   geom_point(mapping = aes(x = COUNTY_CODE, y = PM, color = year))
 ```
 
-![](assignment01_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](assignment01_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->
 
 From the scatterplot, we can see that there are many red points in the
 upper level, which means that many counties had higher average PM2.5
@@ -780,15 +1435,13 @@ lower level, which means that many counties had lower average PM2.5
 concentrations in 2019. Although a few counties had lower average PM2.5
 concentrations in 2004 than in 2019, this did not affect the overall
 results. It seems that on average, PM2.5 concentrations in 2019 have
-decreased than 2004 at the county level in California.
+decreased from 2004 at the county level in California.
 
-Site in Los Angeles level: In order to show aggregate changes in PM2.5
-at the site in Los Angeles in California, we can make scatterplot of
-average values in 2004 and 2019 in different site in LA.
+## Site in Los Angeles level:
 
-``` r
-sites <- filter(pm, COUNTY == "Los Angeles") %>% select(COUNTY, `Site Name`, PM, year,) 
-```
+In order to show aggregate changes in PM2.5 at the site in Los Angeles
+in California, we can make scatterplot of average values in 2004 and
+2019 in different site in LA.
 
 ``` r
 sites_pm_avg <- sites[,.(
@@ -800,15 +1453,14 @@ ggplot(data = sites_pm_avg_data) +
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.1))
 ```
 
-![](assignment01_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](assignment01_files/figure-gfm/unnamed-chunk-31-1.png)<!-- -->
 
-From the scatter plot, we can see that there are 16 sites in Los
-Angeles, one of which has no site name. All red points are in the upper
-layer and blue points are in the lower layer, indicating that the
-average PM2.5 concentration was higher in 2004 and lower in 2019 at
-different Los Angeles sites. Although a few of sites in Los Angeles were
-only recorded in 2004 or 201, but on average, PM2.5 concentrations in
-2019 have decreased than 2004 at the level of sites in LA.
+From the scatter plot, we can see that there are 8 sites in LA. All red
+points are in the upper layer and blue points are in the lower layer,
+indicating that the average PM2.5 concentration was higher in 2004 and
+lower in 2019 at different Los Angeles sites. Overall, PM2.5
+concentrations in 2019 have decreased than in 2004 at the level of sites
+in LA.
 
 In summary, concentrations of PM2.5 have decreased in California from
 2004 to 2019.
