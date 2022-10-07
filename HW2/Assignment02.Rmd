@@ -240,7 +240,7 @@ From the histogram, we can see that the largest number of people are exposed to 
 ```{r}
 chs[!is.na(obesity_level)& !is.na(smoke_gas_exposure)] %>% 
   ggplot(mapping = aes(x = obesity_level), fill = smoke_gas_exposure) + 
-  geom_bar(aes(fill = smoke_gas_exposure), bins = 30) + 
+  geom_bar(aes(fill = smoke_gas_exposure)) + 
   scale_fill_manual(values = c("hotpink","pink","orange","green"))+
   labs(title = "Barchart of BMI by smoke/gas exposure", x = "obesity_level")
 ```

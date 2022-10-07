@@ -677,12 +677,10 @@ of people are exposed to smoke.
 ``` r
 chs[!is.na(obesity_level)& !is.na(smoke_gas_exposure)] %>% 
   ggplot(mapping = aes(x = obesity_level), fill = smoke_gas_exposure) + 
-  geom_bar(aes(fill = smoke_gas_exposure), bins = 30) + 
+  geom_bar(aes(fill = smoke_gas_exposure)) + 
   scale_fill_manual(values = c("hotpink","pink","orange","green"))+
   labs(title = "Barchart of BMI by smoke/gas exposure", x = "obesity_level")
 ```
-
-    ## Warning: Ignoring unknown parameters: bins
 
 ![](Assignment02_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
