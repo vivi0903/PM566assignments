@@ -1,0 +1,310 @@
+---
+title: "Assignment02"
+author: "Yuwei Wu"
+date: "`r Sys.Date()`"
+output: github_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(R.utils)
+library(data.table)
+library(tidyverse)
+library(lubridate)
+library(dtplyr)
+library(tidytext)
+library(ggplot2)
+library(leaflet)
+```
+
+# Data Wrangling
+## Read in data.
+```{r}
+ind <- data.table::fread("chs_individual.csv")
+reg <- data.table::fread("chs_regional.csv")
+```
+## Merge these datasets using the location variable.
+```{r}
+chs <- merge(
+  x     = ind,      
+  y     = reg, 
+  by  = "townname",
+  all.x = TRUE,      
+  all.y = FALSE
+  )
+```
+## 1.After merging the data, make sure you don’t have any duplicates by counting the number of rows. Make sure it matches. In the case of missing values, impute data using the average within the variables “male” and “hispanic.”
+```{r}
+nrow(ind)
+nrow(reg)
+nrow(chs)
+```
+
+There are no duplicates after the merge.
+
+## Check missing values. 
+```{r}
+summary(is.na(chs))
+```
+
+There are missing values for agepft, height, weight, bmi, asthma, father_asthma, mother_asthma, wheeze, hayfever, allergy, educ_parent, smoke, gasstove, fev, fvc, mmef, no_24hr, pm2_5_fr.
+
+
+Then I imputed all missing values in numeric variables.
+```{r}
+chs[, agepft_imp:= fcoalesce(agepft, mean(agepft, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, height_imp:= fcoalesce(as.double(height), mean(height, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, weight_imp:= fcoalesce(as.double(weight), mean(weight, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, bmi_imp:= fcoalesce(bmi, mean(bmi, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, fev_imp:= fcoalesce(fev, mean(fev, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, fvc_imp:= fcoalesce(fvc, mean(fvc, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, mmef_imp:= fcoalesce(mmef, mean(mmef, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, no_24hr_imp:= fcoalesce(no_24hr, mean(no_24hr, na.rm = TRUE)),
+    by = .(male, hispanic)]
+chs[, pm2_5_fr_imp:= fcoalesce(pm2_5_fr, mean(pm2_5_fr, na.rm = TRUE)),
+    by = .(male, hispanic)]
+```
+
+```{r}
+summary(is.na(chs))
+```
+
+Now there are no missing values in these variables.
+
+# 2.Create a new categorical variable named “obesity_level” using the BMI measurement (underweight BMI<14; normal BMI 14-22; overweight BMI 22-24; obese BMI>24). To make sure the variable is rightly coded, create a summary table that contains the minimum BMI, maximum BMI, and the total number of observations per category.
+
+```{r}
+chs <- chs[, obesity_level := fifelse(
+    bmi_imp < 14, "underweight", 
+    fifelse(bmi_imp<22, "normal",
+    fifelse(bmi_imp<=24, "overweight", "obese")))]
+```
+
+Create a summary table
+```{r}
+tab <- chs[, .(
+  min_bmi = min(bmi_imp),
+  max_bmi = max(bmi_imp),
+  N_obs = .N
+), by = obesity_level]
+
+knitr::kable(tab)
+```
+# 3.Create another categorical variable named “smoke_gas_exposure” that summarizes “Second Hand Smoke” and “Gas Stove.” The variable should have four categories in total.
+```{r}
+chs <- chs[, smoke_gas_exposure := fifelse(
+    smoke == 0 & gasstove == 0, "no_exposure",
+    fifelse(smoke == 1 & gasstove == 0, "smoke_exposure",
+    fifelse(smoke == 0 & gasstove == 1, "gas_exposure","both")))]
+table(chs$smoke_gas_exposure, useNA = "always")
+```
+
+Now there are four categories. 214 people who are not exposed to second hand smoke and gas stove. 36 people who are only exposed to second hand smoke. 739 people who are only exposed to gas stove. 151 people who are both exposed to second hand smoke and gas stove. And there are 60 missing values.
+
+# 4.Create four summary tables showing the average (or proportion, if binary) and sd of “Forced expiratory volume in 1 second (ml)” and asthma indicator by town, sex, obesity level, and “smoke_gas_exposure.”
+by town:
+```{r}
+town <- chs[, .(
+  avg_fev    = mean(fev_imp, na.rm = TRUE),
+  sd_fev    = sd(fev_imp, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  N_obs = .N
+), by = townname]
+
+knitr::kable(town)
+```
+
+By town, the mean of “Forced expiratory volume in 1 second (ml)” is very close in 12 towns. People who live in Alpine have the highest mean which is 2087.101 ml, and people who live in Mira Loma have the lowest mean which is 1985.202 ml.  Also, the proportion of asthma is very close in these towns except for people who live in Atascadero have the highest proportion of asthma which is 25.51%.
+
+
+by sex:
+```{r}
+sex <- chs[, .(
+  avg_fev    = mean(fev_imp, na.rm = TRUE),
+  sd_fev    = sd(fev_imp, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  N_obs = .N
+), by = male]
+
+knitr::kable(sex)
+```
+
+By sex, the mean of “Forced expiratory volume in 1 second (ml)” and the proportion of asthma is very similar in males and females.
+
+
+by obesity:
+```{r}
+obesity <- chs[, .(
+  avg_fev    = mean(fev_imp, na.rm = TRUE),
+  sd_fev    = sd(fev_imp, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  N_obs = .N
+), by = obesity_level]
+
+knitr::kable(obesity)
+```
+
+By obesity level,  people who are obese have the highest mean of “Forced expiratory volume in 1 second (ml)” which is 2266.154 ml, and people who are underweight have the lowest mean of “Forced expiratory volume in 1 second (ml)” which is 1698.327 ml.  Also, people who are obese have the highest proportion of asthma which is 21%, and people who are underweight have the lowest proportion of asthma which is 8.57%.
+
+by “smoke_gas_exposure”:
+```{r}
+smoke_gas_exposure <- chs[, .(
+  avg_fev    = mean(fev_imp, na.rm = TRUE),
+  sd_fev    = sd(fev_imp, na.rm = TRUE),
+  prop_asthma = sum(asthma==1, na.rm = TRUE)/sum(asthma==1 | asthma==0, na.rm = TRUE),
+  N_obs = .N
+), by = smoke_gas_exposure]
+
+knitr::kable(smoke_gas_exposure)
+```
+
+By "Second Hand Smoke” and “Gas Stove” exposure, the mean of “Forced expiratory volume in 1 second (ml)” and the proportion of asthma are very similar in these groups.
+
+
+# Looking at the Data (EDA)
+
+The primary questions of interest are: 
+1. What is the association between BMI and FEV (forced expiratory volume)? 
+2. What is the association between smoke and gas exposure and FEV? 
+3. What is the association between PM2.5 exposure and FEV?
+
+## First, check the dimensions, headers, footers.
+```{r}
+dim(chs)
+```
+There are 1200 rows and 60 columns.
+```{r}
+head(chs)
+tail(chs)
+```
+
+## Take a look at the variables.
+```{r}
+str(chs)
+```
+
+## Take a closer look at the key variables.
+```{r}
+table(chs$townname)
+table(chs$obesity_level)
+table(chs$smoke_gas_exposure)
+summary(chs$bmi_imp)
+summary(chs$fev_imp)
+summary(chs$pm25_mass)
+```
+
+# 1.Facet plot showing scatterplots with regression lines of BMI vs FEV by “townname”.
+```{r}
+chs[!is.na(bmi_imp) & !is.na(fev_imp)] %>% 
+  ggplot(mapping = aes(x = bmi_imp, y = fev_imp)) + 
+  geom_point(mapping = aes(color = townname)) + 
+  geom_smooth(method = lm,formula = y~x)+
+  facet_wrap(~ townname)+
+  labs(title = "Scatterplots of BMI vs FEV by townname", x = "BMI", y = "FEV")
+```
+
+From the scatterplots, we can see that BMI has a positive association with FEV in 12 towns. FEV increased with the increase of BMI in 12 towns.
+
+# 2.Stacked histograms of FEV by BMI category and FEV by smoke/gas exposure. Use different color schemes than the ggplot default.
+by BMI category:
+```{r}
+chs[!is.na(fev_imp)] %>% 
+  ggplot(mapping = aes(x = fev_imp), fill = obesity_level) + 
+  geom_histogram(aes(fill = obesity_level), bins = 30) + 
+  scale_fill_manual(values = c("plum 1","sky blue","purple","blue"))+
+  labs(title = "Histogram of FEV by BMI category", x = "FEV")
+```
+
+From the histogram, we can see that the largest number of people is in the "normal" obesity level, it is normally distributed. The distribution of people who are in the "obese" or "overweight" obesity level looks left skewed. The smallest number of people is in the "underweight" obesity level, it looks like not normally distributed.
+
+by smoke/gas exposure:
+```{r}
+chs[!is.na(fev_imp)& !is.na(smoke_gas_exposure)] %>% 
+  ggplot(mapping = aes(x = fev_imp), fill = smoke_gas_exposure) + 
+  geom_histogram(aes(fill = smoke_gas_exposure), bins = 30) + 
+  scale_fill_manual(values = c("hotpink","pink","light blue1","orange"))+
+  labs(title = "Histogram of FEV by smoke/gas exposure", x = "FEV")
+```
+
+From the histogram, we can see that the largest number of people are exposed to both smoke and gas, it looks like normally distributed. The distribution of people who are exposed to gas or not exposed to both smoke and gas also looks like normally distributed. The smallest number of people are exposed to smoke.
+
+## 3.Barchart of BMI by smoke/gas exposure.
+```{r}
+chs[!is.na(obesity_level)& !is.na(smoke_gas_exposure)] %>% 
+  ggplot(mapping = aes(x = obesity_level), fill = smoke_gas_exposure) + 
+  geom_bar(aes(fill = smoke_gas_exposure), bins = 30) + 
+  scale_fill_manual(values = c("hotpink","pink","orange","green"))+
+  labs(title = "Barchart of BMI by smoke/gas exposure", x = "obesity_level")
+```
+
+From the barchart, we can see that the largest number of people are in the "normal" obesity level and the smallest number of people are in the "underweight" obesity level. In the four obesity levels, a large proportion of people are exposed to both smoke and gas, and just a few people are exposed to smoke.
+
+## 4.Statistical summary graphs of FEV by BMI and FEV by smoke/gas exposure category.
+by BMI category:
+```{r}
+ chs[!is.na(obesity_level)& !is.na(fev_imp)] %>% 
+    ggplot() + 
+    stat_summary(mapping = aes(x = obesity_level, y = fev_imp),
+    fun.min = min,
+    fun.max = max,
+    fun = median)+
+    labs(title = "Statistical summary graphs of FEV by BMI", x = "obesity_level", y = "FEV (ml)")
+```
+
+People who are in the "underweight" obesity level have a small median of FEV. People who are in the "obese" obesity level have a large median of FEV. 
+
+by smoke/gas exposure category:
+```{r}
+chs[!is.na(smoke_gas_exposure)& !is.na(fev_imp)] %>% 
+    ggplot() + 
+    stat_summary(mapping = aes(x = smoke_gas_exposure, y = fev_imp),
+    fun.min = min,
+    fun.max = max,
+    fun = median)+
+    labs(title = "Statistical summary graphs of FEV by smoke/gas exposure", x = "smoke/gas exposure", y = "FEV (ml)")
+```
+
+In the four exposure categories, the medians of FEV are very similar that all around 2000 ml.
+
+## 5.A leaflet map showing the concentrations of PM2.5 mass in each of the CHS communities.
+```{r}
+library(leaflet)
+chs.pal <- colorFactor(c('darkgreen','goldenrod', 'brown'), domain=chs$pm25_mass)
+
+map <- leaflet(chs) %>% 
+  # The looks of the Map
+  addProviderTiles('CartoDB.Positron') %>% 
+  # Some circles
+  addCircles(
+    lat = ~lat, lng=~lon, 
+  # HERE IS OUR PAL!
+    label = ~`pm25_mass`, color = ~ chs.pal(pm25_mass),
+    opacity = 1, fillOpacity = 1, radius = 30
+    ) %>%
+  # And a pretty legend
+  addLegend('bottomleft', pal=chs.pal, values=chs$pm25_mass,
+          title='PM2.5 mass', opacity=1)
+map
+```
+
+From the map, we can see that high concentrations of PM2.5 are mainly distributed in the communities of Los Angeles. The communities far from Los Angeles have lower PM2.5 concentrations.
+
+## 6.Choose a visualization to examine whether PM2.5 mass is associated with FEV.
+I choose to use scatterplot to examine whether PM2.5 mass is associated with FEV.
+```{r}
+chs[!is.na(pm25_mass)& !is.na(fev_imp)] %>% 
+ggplot(mapping = aes(x = pm25_mass, y = fev_imp), color = townname) + 
+  geom_point()+
+  geom_smooth(method = 'lm', formula = y~x)+
+  labs(title = "The association between PM2.5 mass and FEV", x = "PM2.5 mass", y = "FEV (ml)")
+```
+
+From the scatter plot, we can see that with the increase of PM2.5 mass, the FEV seems to decrease, but not significantly. The slope is close to 0. So it looks like there is no association between PM2.5 mass and FEV.
