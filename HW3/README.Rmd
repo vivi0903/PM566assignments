@@ -1,0 +1,235 @@
+---
+title: "assignment03"
+author: "Yuwei Wu"
+date: "`r Sys.Date()`"
+output: github_document
+always_allow_html: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rvest)
+library(httr)
+library(xml2)
+library(stringr)
+library(tidyverse)
+library(tidytext)
+library(tibble)
+library(ggplot2)
+```
+
+# APIs
+## 1. Using the NCBI API, look for papers that show up under the term “sars-cov-2 trial vaccine.” Look for the data in the pubmed database, and then retrieve the details of the paper as shown in lab 7. How many papers were you able to find?
+```{r}
+# Downloading the website
+website <- xml2::read_html("https://pubmed.ncbi.nlm.nih.gov/?term=sars-cov-2+trial+vaccine")
+# Finding the counts
+counts <- xml2::xml_find_first(website, "/html/body/main/div[9]/div[2]/div[2]/div[1]/div[1]/span")
+# Turning it into text
+counts <- as.character(counts)
+# Extracting the data using regex
+stringr::str_extract(counts, "[0-9,]+")
+```
+
+I find 4007 papers under the term "sars-cov-2 trial vaccine".
+
+
+## 2. Using the list of pubmed ids you retrieved, download each papers’ details using the query parameter rettype = abstract. If you get more than 250 ids, just keep the first 250.
+```{r}
+query_ids <- GET(
+  url   = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi",
+  query = list(
+              db = "pubmed",
+              term = "sars-cov-2 trial vaccine",
+              retmax = 250)
+)
+# Extracting the content of the response of GET
+ids <- httr::content(query_ids)
+# Turn the result into a character vector
+ids <- as.character(ids)
+# Find all the ids 
+ids <- stringr::str_extract_all(ids, "<Id>[[:digit:]]+</Id>")[[1]]
+# Remove all the leading and trailing <Id> </Id>. Make use of "|"
+ids <- stringr::str_remove_all(ids, "</?Id>")
+```
+
+```{r}
+publications <- GET(
+  url   = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+  query = list(
+    db = "pubmed",
+    id =I(paste(ids,collapse=",")),
+    retmax = 250,
+    rettype = "abstract"
+    )
+)
+
+# Turning the output into character vector
+publications <- httr::content(publications)
+publications_txt <- as.character(publications)
+```
+
+
+## 3. As we did in lab 7. Create a dataset containing the following:
+Pubmed ID number,
+Title of the paper,
+Name of the journal where it was published,
+Publication date, and
+Abstract of the paper (if any).
+```{r}
+pub_char_list <- xml2::xml_children(publications)
+pub_char_list <- sapply(pub_char_list, as.character)
+```
+
+Get the titles:
+```{r}
+titles <- str_extract(pub_char_list, "<ArticleTitle>[[:print:][:space:]]+</ArticleTitle>")
+titles <- str_remove_all(titles, "</?[[:alnum:]- =\"]+>")
+```
+
+Get the name of the journal:
+```{r}
+journal <- str_extract(pub_char_list, "<Title>[[:print:][:space:]]+</Title>")
+journal <- str_remove_all(journal, "</?[[:alnum:]]+>")
+```
+
+Get the publication date:
+```{r}
+date <- str_extract(pub_char_list, "<PubDate>[[:print:][:space:]]+</PubDate>")
+date <- str_remove_all(date, "</?[[:alnum:]]+>")
+date <- str_replace_all(date, "\\s+", " ")
+```
+
+Get the abstract of the paper:
+```{r}
+abstracts <- str_extract(pub_char_list, "<Abstract>[[:print:][:space:]]+</Abstract>")
+abstracts <- str_remove_all(abstracts, "</?[[:alnum:]- =\"]+>")  #'</?[[:alnum:]- ="]+>'
+abstracts <- str_replace_all(abstracts, "[[:space:]]+"," ")
+```
+
+Finally the dataset:
+```{r, cache=TRUE}
+database <- data.frame(
+  PubMedId = ids,
+  Title    = titles,
+  Journal = journal,
+  Date = date,
+  Abstract = abstracts
+)
+knitr::kable(database[1:8,], caption = "Some papers about sars-cov-2 trial vaccine")
+```
+
+# Text Mining
+A new dataset has been added to the data science data repository https://github.com/USCbiostats/data-science-data/tree/master/03_pubmed. The dataset contains 3241 abstracts from articles across 5 search terms. Your job is to analyse these abstracts to find interesting insights.
+```{r}
+pubmed <- read.csv("https://raw.githubusercontent.com/USCbiostats/data-science-data/master/03_pubmed/pubmed.csv")
+```
+
+## 1. Tokenize the abstracts and count the number of each token. Do you see anything interesting? Does removing stop words change what tokens appear as the most frequent? What are the 5 most common tokens for each search term after removing stopwords?
+
+Tokenize words in transcription and look at top 20:
+```{r tokenize, cache = TRUE}
+pubmed %>%
+  unnest_tokens(output=word, input=abstract) %>%
+  count(word, sort = TRUE) %>%
+  top_n(20, n) %>%
+  ggplot(aes(x=n, y=fct_reorder(word, n))) +
+  geom_col()
+```
+
+There are a lot of stop words here. The top 5 words are "the", "of", "and", "in" and "to". 
+
+Then remove stop words:
+```{r, cache=TRUE}
+pubmed %>%
+  unnest_tokens(output=word, input=abstract) %>%
+  count(word, sort = TRUE) %>%  
+  anti_join(stop_words, by="word")%>%
+  filter(!grepl(pattern = "^[0-9]+$", x=word)) %>%
+  top_n(20, n) %>%
+  ggplot(aes(x=n, y=fct_reorder(word, n))) +
+  geom_col()
+```
+
+After removing stop words, these words look more like medical terms.
+
+The 5 most common tokens for each search term after removing stopwords:
+```{r, cache=TRUE}
+pubmed %>% 
+  unnest_tokens(output=token, input=abstract)%>%
+  group_by(term)%>%
+  count(token)%>%
+  anti_join(stop_words, by = c("token" = "word"))%>%
+  top_n(5,n)%>%
+  knitr::kable()
+```
+
+After removing stop words, the 5 most common tokens:
+
+For the term “covid”: “19”, “covid”, “disease”, “pandemic” and “patients”. 
+
+For the term “cystic fibrosis”: “cf”, “cystic”, “disease”, “fibrosis” and “patients”. 
+
+For the term “meningitis”: “clinical”, “csf”, “meningeal”, “meningitis” and “patients”. 
+
+For the term “preeclampsia”: “eclampsia”, “pre”, “preeclampsia”, “pregnancy” and “women”.
+
+For the term “prostate cancer”: “cancer”, “disease”, “patients”, “prostate” and “treatment”. 
+
+## 2. Tokenize the abstracts into bigrams. Find the 10 most common bigram and visualize them with ggplot2.
+```{r, cache=TRUE}
+pubmed %>%
+  unnest_ngrams(output=bigram, input=abstract, n=2) %>%
+  count(bigram, sort=TRUE) %>%
+  top_n(10, n) %>%
+  ggplot(aes(x=n, y=fct_reorder(bigram, n))) +
+  geom_col()
+```
+
+"covid 19" was the top bigram, but there are a lot of non-interesting bigrams (of the, in the). So remove these stop words：
+```{r, cache=TRUE}
+bigram <- pubmed %>%
+  unnest_ngrams(output=bigram, input=abstract, n=2) %>% 
+  separate(col=bigram, into=c("word1", "word2"), sep = " ") %>%
+  select(word1, word2) %>%
+  anti_join(stop_words, by = c("word1" = "word")) %>%
+  anti_join(stop_words, by = c("word2" = "word")) %>%
+  count(word1, word2, sort=TRUE) %>%
+  top_n(10, n)
+```
+
+```{r, cache=TRUE}
+bigram$bigram <- paste(bigram$word1, bigram$word2)
+bigram %>%
+  ggplot(aes(n, fct_reorder(bigram,n))) + 
+  geom_col() +
+  labs(title = "10 most common bigram after removing stop words")
+```
+
+After removing stop words, the 10 common bigrams are "covid 19", "prostate cancer", "pre eclampsia" and so on.
+
+## 3. Calculate the TF-IDF value for each word-search term combination. (here you want the search term to be the “document”) What are the 5 tokens from each search term with the highest TF-IDF value? How are the results different from the answers you got in question 1?
+```{r, cache=TRUE}
+pubmed %>%
+  unnest_tokens(word, abstract) %>%
+  count(word, term) %>%
+  bind_tf_idf(word, term, n) %>%
+  group_by(term)%>%
+  top_n(5,tf_idf)%>%
+  arrange(desc(tf_idf), .by_group = TRUE)%>%
+  knitr::kable()
+```
+
+The 5 most common tokens:
+
+For the term "covid": "covid", "pandemic", "coronavirus", "sars" and "cov".
+
+For the term  "cystic fibrosis": "cf", "fibrosis", "cystic", "cftr" and "sweat".
+
+For the term "meningitis": "meningitis", "meningeal", "pachymeningitis", "csf" and "meninges".
+
+For the term "preeclampsia": "eclampsia", "preeclampsia", "pegnancy", "maternal" and "gestational".
+
+For the term "prostate cancer": "prostate", "androgen", "psa", "prostatectomy" and "castration".
+
+Compared to question 1, although there are many same words, but TF-IDF may have provides more scientific terms which showed more information that were specifically related to our word-search term.
